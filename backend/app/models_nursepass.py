@@ -143,7 +143,7 @@ class NursePassAnalyticsEvent(Base):
 # --- Module NP-M02: Authentication & User Management Models ---
 
 class NursePassUserProfile(Base):
-    __tablename__ = "profiles"
+    __tablename__ = "nursepass_user_profiles"
     __table_args__ = {'extend_existing': True}
 
     id = Column(String(100), primary_key=True, index=True) # UUID string matching auth.users
@@ -163,21 +163,8 @@ class NursePassUserProfile(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-class NursePassSubscription(Base):
-    __tablename__ = "subscriptions"
-    __table_args__ = {'extend_existing': True}
-
-    id = Column(String(100), primary_key=True, index=True)
-    user_id = Column(String(100), nullable=False, index=True)
-    plan_id = Column(String(50), default="free") # free, basic, premium, ultimate
-    status = Column(String(50), default="active") # active, past_due, canceled, expired
-    current_period_end = Column(DateTime, nullable=True)
-    cancel_at_period_end = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
 class NursePassPaymentHistory(Base):
-    __tablename__ = "payment_history"
+    __tablename__ = "nursepass_payment_history"
     __table_args__ = {'extend_existing': True}
 
     id = Column(String(100), primary_key=True, index=True)
@@ -190,7 +177,7 @@ class NursePassPaymentHistory(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class NursePassNotificationPref(Base):
-    __tablename__ = "notification_preferences"
+    __tablename__ = "nursepass_user_notification_prefs"
     __table_args__ = {'extend_existing': True}
 
     user_id = Column(String(100), primary_key=True, index=True)
@@ -201,7 +188,7 @@ class NursePassNotificationPref(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class NursePassUserActivity(Base):
-    __tablename__ = "user_activity"
+    __tablename__ = "nursepass_user_activity"
     __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
@@ -212,7 +199,7 @@ class NursePassUserActivity(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class NursePassExamPref(Base):
-    __tablename__ = "exam_preferences"
+    __tablename__ = "nursepass_exam_preferences"
     __table_args__ = {'extend_existing': True}
 
     user_id = Column(String(100), primary_key=True, index=True)
@@ -294,8 +281,8 @@ class NursePassDashboardNotification(Base):
     is_read = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-class NursePassAchievement(Base):
-    __tablename__ = "nursepass_achievements"
+class NursePassDashboardBadge(Base):
+    __tablename__ = "nursepass_dashboard_badges"
     __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
@@ -317,18 +304,6 @@ class NursePassUserNote(Base):
     content_text = Column(Text, nullable=False)
     tags = Column(JSON, default=list)
     created_at = Column(DateTime, default=datetime.utcnow)
-
-class NursePassCertificate(Base):
-    __tablename__ = "nursepass_certificates"
-    __table_args__ = {'extend_existing': True}
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(String(100), nullable=False, index=True)
-    certificate_name = Column(String(200), nullable=False)
-    exam_name = Column(String(100), nullable=False)
-    score = Column(String(50), nullable=False)
-    issue_date = Column(DateTime, default=datetime.utcnow)
-    certificate_url = Column(String(500), nullable=True)
 
 # --- Module NP-M05: AI Mock Test Engine Models ---
 

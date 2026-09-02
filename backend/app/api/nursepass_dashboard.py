@@ -15,6 +15,7 @@ from ..models_nursepass import (
     NursePassMockTestResult,
     NursePassStudyPlanTask,
     NursePassDashboardNotification,
+    NursePassDashboardBadge,
     NursePassAchievement,
     NursePassUserNote,
     NursePassCertificate
@@ -55,9 +56,9 @@ def ensure_user_dashboard_defaults(db: Session, user_id: str):
                 due_date=datetime.utcnow().strftime("%Y-%m-%d")
             ))
 
-    # 2. Achievements
-    existing_achievements = db.query(NursePassAchievement).filter(NursePassAchievement.user_id == user_id).count()
-    if existing_achievements == 0:
+    # 2. Badges / Achievements
+    existing_badges = db.query(NursePassDashboardBadge).filter(NursePassDashboardBadge.user_id == user_id).count()
+    if existing_badges == 0:
         default_badges = [
             {"key": "first_step", "name": "First Step Nurse", "icon": "Award", "desc": "Completed your initial NursePass diagnostic session"},
             {"key": "q_master_100", "name": "100 Questions Solved", "icon": "CheckCircle2", "desc": "Answered 100+ licensing exam questions"},
@@ -65,7 +66,7 @@ def ensure_user_dashboard_defaults(db: Session, user_id: str):
             {"key": "mock_champion", "name": "Mock Test Champion", "icon": "Trophy", "desc": "Scored 80%+ on an full-length NGN Mock CAT test"}
         ]
         for b in default_badges:
-            db.add(NursePassAchievement(
+            db.add(NursePassDashboardBadge(
                 user_id=user_id,
                 badge_key=b["key"],
                 badge_name=b["name"],
