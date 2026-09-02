@@ -45,6 +45,15 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 173 80% 40%;
   }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  *:focus-visible {
+    outline: 2px solid #14b8a6;
+    outline-offset: 2px;
+  }
 }
 
 body {
@@ -52,6 +61,8 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Glassmorphism utilities */
@@ -69,6 +80,16 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.glass-panel-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-panel-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px -10px rgba(13, 148, 136, 0.25);
+  border-color: rgba(45, 212, 191, 0.4);
+}
+
 .gradient-text {
   background: linear-gradient(135deg, #0F766E 0%, #0D9488 50%, #14B8A6 100%);
   -webkit-background-clip: text;
@@ -79,4 +100,31 @@ body {
   background: linear-gradient(135deg, #2DD4BF 0%, #14B8A6 50%, #5EEAD4 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.glow-teal {
+  box-shadow: 0 0 25px -5px rgba(20, 184, 166, 0.35);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.35);
+}
+
+/* Micro-animations */
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+.animate-float {
+  animation: float-gentle 5s ease-in-out infinite;
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.88; transform: scale(0.985); }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 3.5s ease-in-out infinite;
 }
