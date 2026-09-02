@@ -6,26 +6,32 @@ from openai import AsyncOpenAI
 from fastapi import HTTPException, status
 from typing import AsyncGenerator, List, Dict, Any
 
-from app.config import settings
-from app.models import ChatMessage, AIUsageLog
-from app.services.prompts.prompt_manager import PromptManager
-from app.services.context.context_engine import ContextEngine
+from ...config import settings
+from ...models import ChatMessage, AIUsageLog
+from ..prompts.prompt_manager import PromptManager
+from ..context.context_engine import ContextEngine
 
 logger = logging.getLogger(__name__)
 
 class ChatService:
     def __init__(self):
-        # Initialize client depending on key prefix
+        # Initialize client depending on key prefix or replicate_api_token
+        replicate_token = settings.replicate_api_token or os.environ.get("REPLICATE_API_TOKEN", "")
         api_key = settings.openai_api_key or ""
-        self.api_key = api_key
+        self.api_key = api_key or replicate_token
         
-        if api_key.startswith("r8_"):
+        if replicate_token:
+            os.environ["REPLICATE_API_TOKEN"] = replicate_token
+            self.is_replicate = True
+            self.client = replicate.Client(api_token=replicate_token)
+        elif api_key.startswith("r8_"):
             os.environ["REPLICATE_API_TOKEN"] = api_key
             self.is_replicate = True
             self.client = replicate.Client(api_token=api_key)
         else:
             self.is_replicate = False
             self.client = AsyncOpenAI(api_key=api_key) if api_key else None
+
 
     def _approximate_tokens(self, text: str) -> int:
         """

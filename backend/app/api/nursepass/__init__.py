@@ -56,9 +56,6 @@ from ..nursepass_notifications import router as _notifications_router
 from ..nursepass_institution import router as _institution_router
 from ..nursepass_admin import router as _admin_router
 
-# Import nursepass core using module alias to avoid name collision
-import importlib as _il
-_np_core = _il.import_module("app.api.nursepass", package=None)
 
 nursepass_router.include_router(_auth_router)
 nursepass_router.include_router(_dashboard_router)

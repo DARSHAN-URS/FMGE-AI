@@ -69,16 +69,20 @@ class ReplicateOpenAIMock:
         self.chat = Chat()
 
 
-# Initialize Replicate mock client
+# Initialize OpenAI or Replicate client
 client = None
-if settings.openai_api_key:
-    if settings.openai_api_key.startswith("sk-"):
-        import openai
-        client = openai.OpenAI(api_key=settings.openai_api_key)
-    else:
-        client = ReplicateOpenAIMock(api_key=settings.openai_api_key)
+active_replicate_token = settings.replicate_api_token or os.environ.get("REPLICATE_API_TOKEN", "")
+
+if settings.openai_api_key and settings.openai_api_key.startswith("sk-"):
+    import openai
+    client = openai.OpenAI(api_key=settings.openai_api_key)
+elif active_replicate_token:
+    client = ReplicateOpenAIMock(api_key=active_replicate_token)
+elif settings.openai_api_key:
+    client = ReplicateOpenAIMock(api_key=settings.openai_api_key)
 else:
-    logger.warning("OPENAI_API_KEY is not configured in settings.")
+    logger.warning("Neither OPENAI_API_KEY nor REPLICATE_API_TOKEN configured in settings.")
+
 
 def evaluate_student_profile(profile_dict: dict, allowed_countries: Optional[List[str]] = None) -> AIResultEvaluation:
     """

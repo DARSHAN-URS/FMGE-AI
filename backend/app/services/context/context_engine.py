@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from typing import Dict, Any
 
-from app.models import (
+from ...models import (
     EligibilityRequest,
     EligibilityResult,
     SOPDocument,

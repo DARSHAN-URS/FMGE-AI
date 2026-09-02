@@ -9,11 +9,11 @@ from sqlalchemy import desc
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 
-from app.database import get_db
-from app.auth import get_current_user
-from app.models import ChatSession, ChatMessage, ChatFile, ChatContext, ChatFeedback
-from app.services.chat.chat_service import ChatService
-from app.rate_limiter import rate_limit
+from ..database import get_db
+from ..auth import get_current_user
+from ..models import ChatSession, ChatMessage, ChatFile, ChatContext, ChatFeedback
+from ..services.chat.chat_service import ChatService
+from ..rate_limiter import rate_limit
 
 
 logger = logging.getLogger(__name__)

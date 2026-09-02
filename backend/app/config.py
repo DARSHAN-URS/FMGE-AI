@@ -19,10 +19,14 @@ class Settings(BaseSettings):
         "http://localhost:3002,"
         "https://auraroutes.com,"
         "https://www.auraroutes.com,"
+        "https://routes.auraroutes.com,"
+        "https://nursepass.auraroutes.com,"
+        "https://fmge.auraroutes.com,"
+        "https://api.auraroutes.com,"
         "https://nursepass.com,"
-        "https://www.nursepass.com,"
-        "https://fmge.healthcare-suite.com"
+        "https://www.nursepass.com"
     )
+
 
     # ── Database ─────────────────────────────────────────────────────────────
     # Shared PostgreSQL / Supabase — one database for all products.
@@ -41,9 +45,10 @@ class Settings(BaseSettings):
     supabase_key: str = ""
 
     # ── AI Providers — Shared Engine ─────────────────────────────────────────
-    default_ai_provider: str = "openai"    # openai | anthropic | google
+    default_ai_provider: str = "openai"    # openai | anthropic | google | replicate
     default_ai_model: str = "gpt-4o"
     openai_api_key: str = ""
+    replicate_api_token: str = ""
     gemini_api_key: str = ""
     anthropic_api_key: str = ""
 
@@ -77,9 +82,10 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-# Emit a startup warning if OpenAI key is missing (not an error — runs in mock mode)
-if not settings.openai_api_key:
+# Emit a startup warning if no AI key is configured
+if not settings.openai_api_key and not settings.replicate_api_token:
     import logging
     logging.getLogger(__name__).warning(
-        "OPENAI_API_KEY is not configured. AI features will run in mock/fallback mode."
+        "Neither OPENAI_API_KEY nor REPLICATE_API_TOKEN is configured. AI features will run in mock/fallback mode."
     )
+
