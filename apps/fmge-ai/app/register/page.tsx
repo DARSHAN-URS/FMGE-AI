@@ -52,7 +52,8 @@ export default function RegisterPage() {
             country,
             medical_college: medicalCollege,
             graduation_year: graduationYear,
-            role: "fmge_candidate",
+            role: "doctor",
+            product: "fmge",
           },
         },
       });
