@@ -475,29 +475,29 @@ CREATE POLICY "Public Read NursePass Questions" ON nursepass_questions FOR SELEC
 CREATE POLICY "Public Read FMGE Questions" ON fmge_questions FOR SELECT USING (true);
 
 -- User-Isolation Policies: Users can only view and update their own records
-CREATE POLICY "Users own profiles select" ON profiles FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Users own profiles update" ON profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Users own profiles select" ON profiles FOR SELECT USING (auth.uid()::text = id::text);
+CREATE POLICY "Users own profiles update" ON profiles FOR UPDATE USING (auth.uid()::text = id::text);
 
-CREATE POLICY "Users own product access" ON user_product_access FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own orders" ON orders FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own notifications" ON notifications FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users own product access" ON user_product_access FOR ALL USING (auth.uid()::text = user_id::text);
+CREATE POLICY "Users own orders" ON orders FOR ALL USING (auth.uid()::text = user_id::text);
+CREATE POLICY "Users own notifications" ON notifications FOR ALL USING (auth.uid()::text = user_id::text);
 
-CREATE POLICY "Users own Aura profile" ON aura_student_profiles FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own Aura applications" ON aura_applications FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own Aura SOPs" ON aura_sop_documents FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own Aura visa checks" ON aura_visa_checks FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users own Aura profile" ON aura_student_profiles FOR ALL USING (auth.uid()::text = user_id::text);
+CREATE POLICY "Users own Aura applications" ON aura_applications FOR ALL USING (auth.uid()::text = user_id::text);
+CREATE POLICY "Users own Aura SOPs" ON aura_sop_documents FOR ALL USING (auth.uid()::text = user_id::text);
+CREATE POLICY "Users own Aura visa checks" ON aura_visa_checks FOR ALL USING (auth.uid()::text = user_id::text);
 
-CREATE POLICY "Users own NursePass profile" ON nursepass_profiles FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own NursePass attempts" ON nursepass_question_attempts FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own NursePass CAT" ON nursepass_cat_sessions FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own NursePass OET" ON nursepass_oet_submissions FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users own NursePass profile" ON nursepass_profiles FOR ALL USING (auth.uid()::text = user_id::text);
+CREATE POLICY "Users own NursePass attempts" ON nursepass_question_attempts FOR ALL USING (auth.uid()::text = user_id::text);
+CREATE POLICY "Users own NursePass CAT" ON nursepass_cat_sessions FOR ALL USING (auth.uid()::text = user_id::text);
+CREATE POLICY "Users own NursePass OET" ON nursepass_oet_submissions FOR ALL USING (auth.uid()::text = user_id::text);
 
-CREATE POLICY "Users own FMGE profile" ON fmge_profiles FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own FMGE attempts" ON fmge_question_attempts FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own FMGE bookmarks" ON fmge_bookmarks FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own FMGE mocks" ON fmge_mock_sessions FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own FMGE daily targets" ON fmge_daily_targets FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users own FMGE cases" ON fmge_clinical_cases FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users own FMGE profile" ON fmge_profiles FOR ALL USING (auth.uid()::text = user_id::text);
+CREATE POLICY "Users own FMGE attempts" ON fmge_question_attempts FOR ALL USING (auth.uid()::text = user_id::text);
+CREATE POLICY "Users own FMGE bookmarks" ON fmge_bookmarks FOR ALL USING (auth.uid()::text = user_id::text);
+CREATE POLICY "Users own FMGE mocks" ON fmge_mock_sessions FOR ALL USING (auth.uid()::text = user_id::text);
+CREATE POLICY "Users own FMGE daily targets" ON fmge_daily_targets FOR ALL USING (auth.uid()::text = user_id::text);
+CREATE POLICY "Users own FMGE cases" ON fmge_clinical_cases FOR ALL USING (auth.uid()::text = user_id::text);
 
 -- =============================================================================
 -- SECTION 8: AUTOMATIC TRIGGERS (AUTH & TIMESTAMP SYNCHRONIZATION)
