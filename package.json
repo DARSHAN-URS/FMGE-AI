@@ -8,6 +8,7 @@
     "packages/*"
   ],
   "scripts": {
+    "build": "npm run build --workspace=apps/fmge-ai",
     "dev:aura": "npm run dev --workspace=apps/aura-routes",
     "dev:nursepass": "npm run dev --workspace=apps/nursepass",
     "dev:fmge": "npm run dev --workspace=apps/fmge-ai",
