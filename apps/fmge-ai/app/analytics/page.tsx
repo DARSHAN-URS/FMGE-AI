@@ -1,33 +1,49 @@
 "use client";
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { SidebarLayout } from "@/components/dashboard/SidebarLayout";
 import {
   TrendingUp, Sparkles, CheckCircle2, ShieldCheck, Download, Sliders,
   Zap, Award, AlertCircle, ArrowRight, BarChart3, Users
 } from "lucide-react";
+import { fetchAnalyticsOverview, fetchSubjectMatrix, SubjectAnalyticsItem, AnalyticsOverview } from "@/services/fmge_analytics";
+
+const defaultMatrix: SubjectAnalyticsItem[] = [
+  { subject: "General Medicine", category: "Clinical", completion: 74, accuracy: 81.8, speed: "44s", status: "Strong" },
+  { subject: "General Surgery", category: "Clinical", completion: 68, accuracy: 78.1, speed: "46s", status: "Good" },
+  { subject: "Obstetrics & Gynecology", category: "Clinical", completion: 82, accuracy: 86.6, speed: "42s", status: "Strong" },
+  { subject: "Pharmacology", category: "Para-Clinical", completion: 52, accuracy: 61.5, speed: "52s", status: "Needs Revision" },
+  { subject: "Pathology", category: "Para-Clinical", completion: 61, accuracy: 72.4, speed: "48s", status: "Good" },
+  { subject: "Community Medicine (PSM)", category: "Para-Clinical", completion: 45, accuracy: 58.0, speed: "55s", status: "Priority Weak Spot" }
+];
 
 export default function AnalyticsDashboardPage() {
+  const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
+  const [subjectMatrix, setSubjectMatrix] = useState<SubjectAnalyticsItem[]>(defaultMatrix);
   const [extraWeeks, setExtraWeeks] = useState(0);
   const [extraMocks, setExtraMocks] = useState(0);
   const [pharmaBoost, setPharmaBoost] = useState(false);
 
+  useEffect(() => {
+    fetchAnalyticsOverview()
+      .then((data) => {
+        if (data && data.readiness) setOverview(data);
+      })
+      .catch((e) => console.warn("Analytics overview fetch error:", e));
+
+    fetchSubjectMatrix()
+      .then((mat) => {
+        if (mat && mat.length > 0) setSubjectMatrix(mat);
+      })
+      .catch((e) => console.warn("Subject matrix fetch error:", e));
+  }, []);
+
   // Simulated score boost calculations
-  const baseScore = 194;
-  const baseProb = 89.4;
+  const baseScore = overview ? parseInt(overview.readiness.estimated_marks) || 194 : 194;
+  const baseProb = overview ? overview.pass_prediction.probability_pct : 89.4;
   const scoreBoost = (extraWeeks * 3) + (extraMocks * 2.5) + (pharmaBoost ? 10 : 0);
   const simulatedScore = Math.min(Math.round(baseScore + scoreBoost), 285);
   const simulatedProb = Math.min(Math.round((baseProb + (scoreBoost * 0.4)) * 10) / 10, 99.5);
-
-  const subjectMatrix = [
-    { subject: "General Medicine", category: "Clinical", completion: 74, accuracy: 81.8, speed: "44s", status: "Strong" },
-    { subject: "General Surgery", category: "Clinical", completion: 68, accuracy: 78.1, speed: "46s", status: "Good" },
-    { subject: "Obstetrics & Gynecology", category: "Clinical", completion: 82, accuracy: 86.6, speed: "42s", status: "Strong" },
-    { subject: "Pharmacology", category: "Para-Clinical", completion: 52, accuracy: 61.5, speed: "52s", status: "Needs Revision" },
-    { subject: "Pathology", category: "Para-Clinical", completion: 61, accuracy: 72.4, speed: "48s", status: "Good" },
-    { subject: "Community Medicine (PSM)", category: "Para-Clinical", completion: 45, accuracy: 58.0, speed: "55s", status: "Priority Weak Spot" }
-  ];
 
   const recommendations = [
     {

@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Stethoscope, Lock, Mail, User, Phone, Globe, GraduationCap, ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
+import { Stethoscope, Lock, Mail, User, Phone, ArrowRight, AlertCircle } from "lucide-react";
+import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function RegisterPage() {
   const [medicalCollege, setMedicalCollege] = useState("");
   const [graduationYear, setGraduationYear] = useState("2026");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Live password strength calculator
   const calculatePasswordStrength = (pass: string) => {
@@ -28,14 +30,40 @@ export default function RegisterPage() {
 
   const strength = calculatePasswordStrength(password);
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      if (isSupabaseConfigured()) {
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: fullName,
+              phone,
+              country,
+              medical_college: medicalCollege,
+              graduation_year: graduationYear,
+              role: "fmge_candidate",
+            },
+          },
+        });
+
+        if (signUpError) {
+          setError(signUpError.message);
+          setLoading(false);
+          return;
+        }
+      }
+
       router.push("/verify-email");
-    }, 900);
+    } catch (err: any) {
+      setError(err?.message || "Registration failed. Please try again.");
+      setLoading(false);
+    }
   };
 
   return (
@@ -54,6 +82,13 @@ export default function RegisterPage() {
             Join 14,000+ foreign medical graduates preparing for NBE FMGE & NMC NExT
           </p>
         </div>
+
+        {error && (
+          <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 flex items-center gap-2 text-xs text-rose-700 dark:text-rose-300">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
 
         <form onSubmit={handleRegister} className="space-y-4">
           {/* Full Name & Email */}
