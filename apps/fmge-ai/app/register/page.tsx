@@ -36,27 +36,31 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      if (isSupabaseConfigured()) {
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              full_name: fullName,
-              phone,
-              country,
-              medical_college: medicalCollege,
-              graduation_year: graduationYear,
-              role: "fmge_candidate",
-            },
-          },
-        });
+      if (!isSupabaseConfigured()) {
+        setError("Supabase Auth is not configured. Please configure your NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to register accounts.");
+        setLoading(false);
+        return;
+      }
 
-        if (signUpError) {
-          setError(signUpError.message);
-          setLoading(false);
-          return;
-        }
+      const { error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            phone,
+            country,
+            medical_college: medicalCollege,
+            graduation_year: graduationYear,
+            role: "fmge_candidate",
+          },
+        },
+      });
+
+      if (signUpError) {
+        setError(signUpError.message);
+        setLoading(false);
+        return;
       }
 
       router.push("/verify-email");

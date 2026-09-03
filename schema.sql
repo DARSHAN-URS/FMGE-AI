@@ -669,3 +669,83 @@ CREATE TABLE IF NOT EXISTS student_documents (
 );
 CREATE INDEX IF NOT EXISTS idx_student_documents_user_id ON student_documents(user_id);
 CREATE INDEX IF NOT EXISTS idx_student_documents_category ON student_documents(category);
+
+-- =========================================================================
+-- 12. FMGE AI EXAMINATION & CLINICAL PREP TABLES
+-- =========================================================================
+
+CREATE TABLE IF NOT EXISTS fmge_profiles (
+    id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    user_id VARCHAR(100) UNIQUE NOT NULL,
+    target_exam VARCHAR(50) DEFAULT 'FMGE Dec 2026',
+    medical_college VARCHAR(150),
+    country VARCHAR(100) DEFAULT 'Russia',
+    graduation_year VARCHAR(10) DEFAULT '2026',
+    study_streak_days INTEGER DEFAULT 1,
+    readiness_score DOUBLE PRECISION DEFAULT 84.5,
+    estimated_marks VARCHAR(20) DEFAULT '194 / 300',
+    subscription_plan VARCHAR(50) DEFAULT 'Pro Clinical Pass',
+    onboarding_completed BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (now() AT TIME ZONE 'utc'),
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (now() AT TIME ZONE 'utc')
+);
+CREATE INDEX IF NOT EXISTS idx_fmge_profiles_user_id ON fmge_profiles(user_id);
+
+CREATE TABLE IF NOT EXISTS fmge_questions (
+    id SERIAL PRIMARY KEY,
+    subject VARCHAR(100) NOT NULL,
+    topic VARCHAR(150) NOT NULL,
+    difficulty VARCHAR(50) DEFAULT 'Hard (NBE Level)',
+    question_stem TEXT NOT NULL,
+    options JSONB NOT NULL,
+    correct_option INTEGER NOT NULL,
+    explanation JSONB NOT NULL,
+    is_ibq BOOLEAN DEFAULT FALSE,
+    image_url TEXT,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (now() AT TIME ZONE 'utc')
+);
+CREATE INDEX IF NOT EXISTS idx_fmge_questions_subject ON fmge_questions(subject);
+
+CREATE TABLE IF NOT EXISTS fmge_question_attempts (
+    id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    user_id VARCHAR(100) NOT NULL,
+    question_id INTEGER NOT NULL REFERENCES fmge_questions(id) ON DELETE CASCADE,
+    selected_option INTEGER NOT NULL,
+    is_correct BOOLEAN NOT NULL,
+    time_taken_seconds INTEGER NOT NULL,
+    attempted_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (now() AT TIME ZONE 'utc')
+);
+CREATE INDEX IF NOT EXISTS idx_fmge_attempts_user_id ON fmge_question_attempts(user_id);
+
+CREATE TABLE IF NOT EXISTS fmge_bookmarks (
+    id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    user_id VARCHAR(100) NOT NULL,
+    question_id INTEGER NOT NULL REFERENCES fmge_questions(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (now() AT TIME ZONE 'utc'),
+    UNIQUE (user_id, question_id)
+);
+CREATE INDEX IF NOT EXISTS idx_fmge_bookmarks_user_id ON fmge_bookmarks(user_id);
+
+CREATE TABLE IF NOT EXISTS fmge_mock_sessions (
+    id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    user_id VARCHAR(100) NOT NULL,
+    template_id VARCHAR(50) NOT NULL,
+    answers JSONB NOT NULL DEFAULT '{}'::jsonb,
+    score INTEGER DEFAULT 0,
+    max_marks INTEGER DEFAULT 300,
+    result VARCHAR(10) DEFAULT 'PENDING',
+    time_taken_seconds INTEGER DEFAULT 0,
+    completed_at TIMESTAMP WITHOUT TIME ZONE
+);
+CREATE INDEX IF NOT EXISTS idx_fmge_mock_sessions_user ON fmge_mock_sessions(user_id);
+
+CREATE TABLE IF NOT EXISTS fmge_daily_targets (
+    id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    user_id VARCHAR(100) NOT NULL,
+    title VARCHAR(150) NOT NULL,
+    subtitle VARCHAR(200),
+    estimated_mins INTEGER DEFAULT 30,
+    completed BOOLEAN DEFAULT FALSE,
+    due_date DATE DEFAULT CURRENT_DATE
+);
+CREATE INDEX IF NOT EXISTS idx_fmge_daily_targets_user ON fmge_daily_targets(user_id);

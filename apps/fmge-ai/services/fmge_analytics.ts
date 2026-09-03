@@ -54,19 +54,36 @@ export async function fetchAnalyticsOverview(): Promise<AnalyticsOverview> {
 }
 
 export async function fetchSubjectMatrix(): Promise<SubjectAnalyticsItem[]> {
-  const res = await authenticatedFetch("/api/fmge/analytics/subject-matrix");
+  const res = await authenticatedFetch("/api/fmge/analytics/subject-breakdown");
   if (!res.ok) {
-    return [
-      { subject: "General Medicine", category: "Clinical", completion: 74, accuracy: 81.8, speed: "44s", status: "Strong" },
-      { subject: "General Surgery", category: "Clinical", completion: 68, accuracy: 78.1, speed: "46s", status: "Good" },
-      { subject: "Obstetrics & Gynecology", category: "Clinical", completion: 82, accuracy: 86.6, speed: "42s", status: "Strong" },
-      { subject: "Pharmacology", category: "Para-Clinical", completion: 52, accuracy: 61.5, speed: "52s", status: "Needs Revision" },
-      { subject: "Pathology", category: "Para-Clinical", completion: 61, accuracy: 72.4, speed: "48s", status: "Good" },
-      { subject: "Community Medicine (PSM)", category: "Para-Clinical", completion: 45, accuracy: 58.0, speed: "55s", status: "Priority Weak Spot" }
-    ];
+    throw new Error("Failed to load subject breakdown");
   }
   const data = await res.json();
-  return data.matrix || [];
+  const rawList = data.matrix || [];
+  return rawList.map((item: any) => ({
+    subject: item.subject,
+    category: item.category,
+    completion: item.completion_pct || item.completion,
+    accuracy: item.accuracy_pct || item.accuracy,
+    speed: item.avg_speed_sec ? `${item.avg_speed_sec}s` : item.speed || "45s",
+    status: item.status,
+  }));
+}
+
+export async function fetchAnalyticsRecommendations(): Promise<AnalyticsRecommendation[]> {
+  const res = await authenticatedFetch("/api/fmge/analytics/recommendations");
+  if (!res.ok) return [];
+  const data = await res.json();
+  const rawRecs = data.recommendations || [];
+  return rawRecs.map((r: any) => ({
+    id: r.id,
+    priority: r.priority,
+    title: r.title,
+    reason: r.reason,
+    expectedGain: r.expected_gain || r.expectedGain,
+    estimatedMins: r.estimated_mins || r.estimatedMins,
+    url: r.action_url || r.url,
+  }));
 }
 
 export async function simulatePassBoost(payload: {
@@ -80,15 +97,11 @@ export async function simulatePassBoost(payload: {
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
-    // Fallback formula
-    const extraWeeks = payload.extra_weeks_study || 0;
-    const extraMocks = payload.extra_mocks_count || 0;
-    const pharma = payload.improve_pharmacology ? 10 : 0;
-    const scoreBoost = (extraWeeks * 3) + (extraMocks * 2.5) + pharma;
-    return {
-      simulated_marks: Math.min(Math.round(194 + scoreBoost), 285),
-      simulated_probability: Math.min(Math.round((89.4 + (scoreBoost * 0.4)) * 10) / 10, 99.5),
-    };
+    throw new Error("Simulation calculation failed");
   }
-  return res.json();
+  const data = await res.json();
+  return {
+    simulated_marks: data.simulated_score || data.simulated_marks,
+    simulated_probability: data.simulated_pass_probability || data.simulated_probability,
+  };
 }

@@ -6,20 +6,12 @@ import {
   TrendingUp, Sparkles, CheckCircle2, ShieldCheck, Download, Sliders,
   Zap, Award, AlertCircle, ArrowRight, BarChart3, Users
 } from "lucide-react";
-import { fetchAnalyticsOverview, fetchSubjectMatrix, SubjectAnalyticsItem, AnalyticsOverview } from "@/services/fmge_analytics";
-
-const defaultMatrix: SubjectAnalyticsItem[] = [
-  { subject: "General Medicine", category: "Clinical", completion: 74, accuracy: 81.8, speed: "44s", status: "Strong" },
-  { subject: "General Surgery", category: "Clinical", completion: 68, accuracy: 78.1, speed: "46s", status: "Good" },
-  { subject: "Obstetrics & Gynecology", category: "Clinical", completion: 82, accuracy: 86.6, speed: "42s", status: "Strong" },
-  { subject: "Pharmacology", category: "Para-Clinical", completion: 52, accuracy: 61.5, speed: "52s", status: "Needs Revision" },
-  { subject: "Pathology", category: "Para-Clinical", completion: 61, accuracy: 72.4, speed: "48s", status: "Good" },
-  { subject: "Community Medicine (PSM)", category: "Para-Clinical", completion: 45, accuracy: 58.0, speed: "55s", status: "Priority Weak Spot" }
-];
+import { fetchAnalyticsOverview, fetchSubjectMatrix, fetchAnalyticsRecommendations, SubjectAnalyticsItem, AnalyticsOverview, AnalyticsRecommendation } from "@/services/fmge_analytics";
 
 export default function AnalyticsDashboardPage() {
   const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
-  const [subjectMatrix, setSubjectMatrix] = useState<SubjectAnalyticsItem[]>(defaultMatrix);
+  const [subjectMatrix, setSubjectMatrix] = useState<SubjectAnalyticsItem[]>([]);
+  const [recommendations, setRecommendations] = useState<AnalyticsRecommendation[]>([]);
   const [extraWeeks, setExtraWeeks] = useState(0);
   const [extraMocks, setExtraMocks] = useState(0);
   const [pharmaBoost, setPharmaBoost] = useState(false);
@@ -33,9 +25,15 @@ export default function AnalyticsDashboardPage() {
 
     fetchSubjectMatrix()
       .then((mat) => {
-        if (mat && mat.length > 0) setSubjectMatrix(mat);
+        if (mat) setSubjectMatrix(mat);
       })
       .catch((e) => console.warn("Subject matrix fetch error:", e));
+
+    fetchAnalyticsRecommendations()
+      .then((recs) => {
+        if (recs) setRecommendations(recs);
+      })
+      .catch((e) => console.warn("Recommendations fetch error:", e));
   }, []);
 
   // Simulated score boost calculations
@@ -44,36 +42,6 @@ export default function AnalyticsDashboardPage() {
   const scoreBoost = (extraWeeks * 3) + (extraMocks * 2.5) + (pharmaBoost ? 10 : 0);
   const simulatedScore = Math.min(Math.round(baseScore + scoreBoost), 285);
   const simulatedProb = Math.min(Math.round((baseProb + (scoreBoost * 0.4)) * 10) / 10, 99.5);
-
-  const recommendations = [
-    {
-      id: "rec-1",
-      priority: "HIGH",
-      title: "Revise Autonomic Pharmacology & Antimicrobial Mechanisms",
-      reason: "Accuracy in Pharmacology is 61.5% (15% below clinical average).",
-      expectedGain: "+8 Marks in FMGE",
-      estimatedMins: 45,
-      url: "/qbank?subject=pharmacology"
-    },
-    {
-      id: "rec-2",
-      priority: "HIGH",
-      title: "Attempt NBE Grand Test #2",
-      reason: "Increasing mock frequency from 1 to 2 per month improves time management speed by 12s/MCQ.",
-      expectedGain: "+12 Marks in FMGE",
-      estimatedMins: 300,
-      url: "/mocks"
-    },
-    {
-      id: "rec-3",
-      priority: "MEDIUM",
-      title: "Review PSM Vaccine Schedule & Biostatistics",
-      reason: "PSM completion is 45.0%. Target completion is 70% before Aug 15.",
-      expectedGain: "+6 Marks in FMGE",
-      estimatedMins: 30,
-      url: "/planner"
-    }
-  ];
 
   return (
     <SidebarLayout>

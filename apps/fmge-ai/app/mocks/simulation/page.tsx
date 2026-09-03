@@ -8,55 +8,14 @@ import {
   Maximize2, ChevronLeft, ChevronRight, Save, LogOut, Check
 } from "lucide-react";
 
-const sampleQuestions = [
-  {
-    id: 101,
-    part: "Part A",
-    subject: "General Medicine",
-    topic: "Cardiology",
-    stem: "A 45-year-old male presents with sudden onset retrosternal crushing pain radiating to left jaw. ECG shows ST elevation in II, III, aVF. What coronary artery is acutely occluded?",
-    options: [
-      { id: 0, text: "Left Anterior Descending Artery (LAD)" },
-      { id: 1, text: "Right Coronary Artery (RCA)" },
-      { id: 2, text: "Left Circumflex Artery (LCx)" },
-      { id: 3, text: "Left Main Coronary Artery (LMCA)" }
-    ]
-  },
-  {
-    id: 102,
-    part: "Part A",
-    subject: "Pharmacology",
-    topic: "Antimicrobials",
-    stem: "Which of the following anti-hypertensive drugs is contraindicated in pregnant women due to risk of fetal renal dysgenesis?",
-    options: [
-      { id: 0, text: "Labetalol" },
-      { id: 1, text: "Methyldopa" },
-      { id: 2, text: "Enalapril (ACE Inhibitor)" },
-      { id: 3, text: "Nifedipine" }
-    ]
-  },
-  {
-    id: 103,
-    part: "Part B",
-    subject: "Obstetrics & Gynecology",
-    topic: "Pre-eclampsia",
-    stem: "A 28-year-old primigravida at 34 weeks presents with BP 165/110 mmHg, 3+ proteinuria, and severe headache. What is the drug of choice for seizure prophylaxis?",
-    options: [
-      { id: 0, text: "Phenytoin" },
-      { id: 1, text: "Magnesium Sulfate (MgSO4)" },
-      { id: 2, text: "Diazepam" },
-      { id: 3, text: "Sodium Nitroprusside" }
-    ]
-  }
-];
-
 import { fetchMockQuestions, autoSaveMockAnswers, submitMockTest, MockQuestion } from "@/services/fmge_mocks";
 import { useAuth } from "@/components/common/AuthContext";
 
 export default function ExamSimulationPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const [questions, setQuestions] = useState<MockQuestion[]>(sampleQuestions);
+  const [questions, setQuestions] = useState<MockQuestion[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentPart, setCurrentPart] = useState<"Part A" | "Part B">("Part A");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
@@ -67,12 +26,16 @@ export default function ExamSimulationPage() {
   useEffect(() => {
     fetchMockQuestions("gt-01")
       .then((qs) => {
-        if (qs && qs.length > 0) setQuestions(qs);
+        if (qs) setQuestions(qs);
+        setLoading(false);
       })
-      .catch((e) => console.warn("Could not load mock questions:", e));
+      .catch((e) => {
+        console.warn("Could not load mock questions:", e);
+        setLoading(false);
+      });
   }, []);
 
-  const currentQ = questions[currentIndex] || sampleQuestions[0];
+  const currentQ = questions[currentIndex];
 
   const handleSelectOption = (optId: number) => {
     const updated = { ...answers, [currentQ.id]: optId };
@@ -119,6 +82,19 @@ export default function ExamSimulationPage() {
     }
     router.push("/mocks/results/gt-01");
   };
+
+  if (loading || !currentQ) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-8">
+        <div className="text-center space-y-3">
+          <div className="w-10 h-10 rounded-xl bg-teal-500 text-slate-950 font-bold flex items-center justify-center mx-auto animate-pulse">
+            NBE
+          </div>
+          <p className="text-xs text-slate-400 font-bold">Initializing NBE CBT Computer-Based Examination Engine...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col antialiased">
@@ -182,7 +158,7 @@ export default function ExamSimulationPage() {
             {/* Meta header */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <span className="text-xs font-bold text-teal-400 bg-teal-950 px-3 py-1 rounded border border-teal-800">
-                Question {currentIndex + 1} of {sampleQuestions.length} • {currentQ.subject}
+                Question {currentIndex + 1} of {questions.length} • {currentQ.subject}
               </span>
               <span className="text-[11px] text-slate-400 flex items-center gap-1 font-mono">
                 <Save className="w-3.5 h-3.5 text-emerald-400" />
@@ -259,8 +235,8 @@ export default function ExamSimulationPage() {
               </button>
 
               <button
-                disabled={currentIndex === sampleQuestions.length - 1}
-                onClick={() => setCurrentIndex((i) => Math.min(i + 1, sampleQuestions.length - 1))}
+                disabled={currentIndex === questions.length - 1}
+                onClick={() => setCurrentIndex((i) => Math.min(i + 1, questions.length - 1))}
                 className="px-6 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center gap-1 shadow"
               >
                 <span>Save & Next</span>
@@ -290,13 +266,13 @@ export default function ExamSimulationPage() {
             </div>
             <div className="flex items-center gap-2">
               <span className="w-3.5 h-3.5 rounded bg-slate-700 shrink-0" />
-              <span>Unvisited ({sampleQuestions.length - Object.keys(answers).length})</span>
+              <span>Unvisited ({questions.length - Object.keys(answers).length})</span>
             </div>
           </div>
 
           {/* Question Grid */}
           <div className="grid grid-cols-5 gap-2.5 pt-2">
-            {sampleQuestions.map((q, idx) => {
+            {questions.map((q, idx) => {
               const isAns = answers[q.id] !== undefined;
               const isMarked = markedForReview[q.id];
               const isCurrent = idx === currentIndex;
