@@ -16,16 +16,23 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- Master User Profiles (Linked 1:1 to Supabase Auth auth.users)
 CREATE TABLE IF NOT EXISTS profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    full_name VARCHAR(255) NOT NULL,
-    phone VARCHAR(50),
-    avatar_url TEXT,
-    role VARCHAR(50) DEFAULT 'student' CHECK (role IN ('student', 'candidate', 'doctor', 'nurse', 'faculty', 'institution_admin', 'platform_admin')),
-    default_product VARCHAR(50) DEFAULT 'fmge' CHECK (default_product IN ('aura', 'nursepass', 'fmge')),
-    is_active BOOLEAN DEFAULT TRUE,
+    email VARCHAR(255),
+    full_name VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+-- Ensure all columns exist even if profiles table already existed prior
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS email VARCHAR(255);
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS full_name VARCHAR(255);
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS phone VARCHAR(50);
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'student';
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS default_product VARCHAR(50) DEFAULT 'fmge';
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now());
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now());
+
 CREATE INDEX IF NOT EXISTS idx_profiles_email ON profiles(email);
 CREATE INDEX IF NOT EXISTS idx_profiles_role ON profiles(role);
 
@@ -33,8 +40,8 @@ CREATE INDEX IF NOT EXISTS idx_profiles_role ON profiles(role);
 CREATE TABLE IF NOT EXISTS user_product_access (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-    product VARCHAR(50) NOT NULL CHECK (product IN ('aura', 'nursepass', 'fmge')),
-    tier VARCHAR(50) DEFAULT 'free' CHECK (tier IN ('free', 'basic', 'pro', 'institutional', 'lifetime')),
+    product VARCHAR(50) NOT NULL,
+    tier VARCHAR(50) DEFAULT 'free',
     is_active BOOLEAN DEFAULT TRUE,
     expires_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
@@ -67,30 +74,45 @@ CREATE INDEX IF NOT EXISTS idx_pricing_plans_product ON pricing_plans(product);
 CREATE TABLE IF NOT EXISTS orders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
-    product VARCHAR(50) NOT NULL CHECK (product IN ('aura', 'nursepass', 'fmge')),
-    plan_id VARCHAR(50) REFERENCES pricing_plans(id),
-    razorpay_order_id VARCHAR(150) UNIQUE NOT NULL,
-    amount DOUBLE PRECISION NOT NULL,
+    product VARCHAR(50) NOT NULL DEFAULT 'fmge',
+    plan_id VARCHAR(50),
+    razorpay_order_id VARCHAR(150),
+    amount DOUBLE PRECISION,
     currency VARCHAR(10) DEFAULT 'INR',
-    status VARCHAR(50) DEFAULT 'created' CHECK (status IN ('created', 'attempted', 'paid', 'failed', 'refunded')),
+    status VARCHAR(50) DEFAULT 'created',
     metadata JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS product VARCHAR(50) DEFAULT 'fmge';
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS plan_id VARCHAR(50);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS razorpay_order_id VARCHAR(150);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS amount DOUBLE PRECISION;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS currency VARCHAR(10) DEFAULT 'INR';
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'created';
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::jsonb;
+
 CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_orders_rp_id ON orders(razorpay_order_id);
 
 -- Payments & Verification Receipts
 CREATE TABLE IF NOT EXISTS payments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    order_id UUID NOT NULL UNIQUE REFERENCES orders(id) ON DELETE CASCADE,
-    razorpay_payment_id VARCHAR(150) UNIQUE NOT NULL,
-    razorpay_signature VARCHAR(300) NOT NULL,
-    amount DOUBLE PRECISION NOT NULL,
-    payment_method VARCHAR(50) NOT NULL,
-    receipt_number VARCHAR(100) NOT NULL,
+    order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
+    razorpay_payment_id VARCHAR(150),
+    razorpay_signature VARCHAR(300),
+    amount DOUBLE PRECISION,
+    payment_method VARCHAR(50),
+    receipt_number VARCHAR(100),
     status VARCHAR(50) DEFAULT 'captured',
     paid_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS razorpay_payment_id VARCHAR(150);
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS razorpay_signature VARCHAR(300);
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS amount DOUBLE PRECISION;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50);
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS receipt_number VARCHAR(100);
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'captured';
+
 CREATE INDEX IF NOT EXISTS idx_payments_rp_id ON payments(razorpay_payment_id);
 
 -- =============================================================================
@@ -101,14 +123,19 @@ CREATE INDEX IF NOT EXISTS idx_payments_rp_id ON payments(razorpay_payment_id);
 CREATE TABLE IF NOT EXISTS notifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-    product VARCHAR(50) NOT NULL CHECK (product IN ('aura', 'nursepass', 'fmge', 'suite')),
+    product VARCHAR(50) NOT NULL DEFAULT 'suite',
     title VARCHAR(200) NOT NULL,
     message TEXT NOT NULL,
-    category VARCHAR(50) DEFAULT 'general', -- 'exam', 'application', 'billing', 'ai'
+    category VARCHAR(50) DEFAULT 'general',
     link_url TEXT,
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS product VARCHAR(50) DEFAULT 'suite';
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS category VARCHAR(50) DEFAULT 'general';
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS link_url TEXT;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT FALSE;
+
 CREATE INDEX IF NOT EXISTS idx_notifications_user_unread ON notifications(user_id, is_read);
 
 -- AI Inference & Token Audit Logs (LLM Observability)
