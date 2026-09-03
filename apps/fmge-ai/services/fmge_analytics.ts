@@ -105,3 +105,24 @@ export async function simulatePassBoost(payload: {
     simulated_probability: data.simulated_pass_probability || data.simulated_probability,
   };
 }
+
+export interface CountryGapAnalysis {
+  country: string;
+  curriculum_style: string;
+  historical_pass_rate_benchmark: string;
+  top_curriculum_gaps: Array<{
+    subject: string;
+    severity: "CRITICAL" | "HIGH" | "MEDIUM";
+    reason: string;
+    high_yield_recommendation: string;
+  }>;
+  strengths: string[];
+  suggested_action: string;
+}
+
+export async function fetchCountryGapAnalysis(country: string = "Georgia"): Promise<CountryGapAnalysis | null> {
+  const res = await authenticatedFetch(`/api/fmge/analytics/country-gap-analysis?country=${encodeURIComponent(country)}`);
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.country_gap_analysis || null;
+}

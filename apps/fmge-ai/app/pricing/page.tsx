@@ -17,37 +17,59 @@ export default function PricingCheckoutPage() {
       id: "free",
       name: "Free Trial",
       price: 0,
-      period: "Forever Free",
-      desc: "Basic question access & daily study planner",
+      period: "50 Questions",
+      desc: "Free sample trial to experience AI QBank & Study Planner",
       popular: false,
-      features: ["100 QBank Practice Questions", "1 Full NBE Mock Test", "Basic Study Planner", "Community Forum Access"]
+      features: [
+        "50 Adaptive QBank Practice Questions",
+        "1 Diagnostic Mini NBE Mock Test",
+        "AI Study Schedule Generator",
+        "Harrison & Robbins Reference Pearls"
+      ]
     },
     {
       id: "basic",
-      name: "Basic Aspirant",
-      price: 1499,
-      period: "per month",
-      desc: "Full 19-subject QBank & standard mock tests",
+      name: "Basic Aspirant Pass",
+      price: 2999,
+      period: "One-Time",
+      desc: "Complete 19-Subject Question Bank + Full Mock Tests",
       popular: false,
-      features: ["Full 19-Subject Question Bank", "5 NBE CBT Mock Tests", "AI Study Planner & SM-2 Spaced Repetition", "Basic AI Tutor Doubt Solver"]
+      features: [
+        "Full 19-Subject Adaptive Question Bank (2,000+ MCQs)",
+        "Full NBE Mock Test Engine (Part A + Part B, 300 Qs)",
+        "Distractor Analysis on every option",
+        "Automated SM-2 Spaced Repetition Planner"
+      ]
     },
     {
       id: "premium",
-      name: "Premium Pro",
-      price: 2999,
-      period: "per month",
-      desc: "Everything + AI Tutor, Clinical Cases & PACS Image Lab",
+      name: "Premium Clinical Pro",
+      price: 5999,
+      period: "Most Recommended",
+      desc: "Country-Specific Gap Analysis + 24/7 Unlimited AI Medical Tutor",
       popular: true,
-      features: ["Unlimited QBank & Custom Test Builder", "Unlimited NBE CBT Mock Tests & Analytics", "24/7 AI Medical Tutor & Voice Assistant", "AI Clinical Case Simulator & EMR Workbench", "PACS Educational Medical Image Lab", "Downloadable GST Tax Invoices & Reports"]
+      features: [
+        "Everything in Basic Pass",
+        "Country-Specific Curriculum Gap Analysis (Georgia, Russia, etc.)",
+        "24/7 Unlimited AI Medical Tutor with Clinical Reasoning",
+        "PACS Educational Medical Image Lab (ECG/X-Ray/Histopath)",
+        "AI Pass Probability Predictor & What-If Simulator",
+        "Daily WhatsApp Milestones & Revision Reminders"
+      ]
     },
     {
-      id: "ultimate",
-      name: "Ultimate Institutional",
+      id: "crash_course",
+      name: "1-Month Crash Course",
       price: 4999,
-      period: "per month",
-      desc: "1-on-1 Faculty Mentorship & Institution Cohorts",
+      period: "30-Day Intensive",
+      desc: "For candidates with exam date booked needing rapid revision",
       popular: false,
-      features: ["Everything in Premium Pro", "1-on-1 Faculty Mentorship Sessions", "Institution Cohort Leaderboard Access", "Priority 24/7 Academic Support"]
+      features: [
+        "30-Day Intensive Day-by-Day High-Yield Revision Schedule",
+        "50 & 100 Rapid Review PYQ Question Sets",
+        "High-Yield Clinical Pearls & Must-Know Mnemonics",
+        "2 Full NBE Grand Test CBT Simulations with Benchmark"
+      ]
     }
   ];
 
