@@ -10,29 +10,55 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- =============================================================================
+-- PRE-MIGRATION CLEANUP: Remove any legacy VARCHAR id tables to enable UUID auth
+-- =============================================================================
+DO $$
+BEGIN
+    -- Drop legacy profiles if id is VARCHAR (incompatible with Supabase auth.users UUID)
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' AND table_name = 'profiles' AND data_type = 'character varying' AND column_name = 'id'
+    ) THEN
+        DROP TABLE IF EXISTS public.profiles CASCADE;
+    END IF;
+
+    -- Drop legacy orders if id is VARCHAR
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' AND table_name = 'orders' AND data_type = 'character varying' AND column_name = 'id'
+    ) THEN
+        DROP TABLE IF EXISTS public.orders CASCADE;
+    END IF;
+
+    -- Drop legacy payments if id is VARCHAR
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' AND table_name = 'payments' AND data_type = 'character varying' AND column_name = 'id'
+    ) THEN
+        DROP TABLE IF EXISTS public.payments CASCADE;
+    END IF;
+
+    -- Drop dependent user_product_access if conflicting
+    DROP TABLE IF EXISTS public.user_product_access CASCADE;
+END $$;
+
+-- =============================================================================
 -- SECTION 1: CORE IDENTITY & SHARED MULTI-TENANT ARCHITECTURE
 -- =============================================================================
 
 -- Master User Profiles (Linked 1:1 to Supabase Auth auth.users)
 CREATE TABLE IF NOT EXISTS profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    email VARCHAR(255),
-    full_name VARCHAR(255),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    full_name VARCHAR(255) NOT NULL,
+    phone VARCHAR(50),
+    avatar_url TEXT,
+    role VARCHAR(50) DEFAULT 'student' CHECK (role IN ('student', 'candidate', 'doctor', 'nurse', 'faculty', 'institution_admin', 'platform_admin')),
+    default_product VARCHAR(50) DEFAULT 'fmge' CHECK (default_product IN ('aura', 'nursepass', 'fmge')),
+    is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
-
--- Ensure all columns exist even if profiles table already existed prior
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS email VARCHAR(255);
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS full_name VARCHAR(255);
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS phone VARCHAR(50);
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'student';
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS default_product VARCHAR(50) DEFAULT 'fmge';
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now());
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now());
-
 CREATE INDEX IF NOT EXISTS idx_profiles_email ON profiles(email);
 CREATE INDEX IF NOT EXISTS idx_profiles_role ON profiles(role);
 
@@ -83,14 +109,6 @@ CREATE TABLE IF NOT EXISTS orders (
     metadata JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS product VARCHAR(50) DEFAULT 'fmge';
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS plan_id VARCHAR(50);
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS razorpay_order_id VARCHAR(150);
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS amount DOUBLE PRECISION;
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS currency VARCHAR(10) DEFAULT 'INR';
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'created';
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::jsonb;
-
 CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_orders_rp_id ON orders(razorpay_order_id);
 
@@ -106,13 +124,6 @@ CREATE TABLE IF NOT EXISTS payments (
     status VARCHAR(50) DEFAULT 'captured',
     paid_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
-ALTER TABLE payments ADD COLUMN IF NOT EXISTS razorpay_payment_id VARCHAR(150);
-ALTER TABLE payments ADD COLUMN IF NOT EXISTS razorpay_signature VARCHAR(300);
-ALTER TABLE payments ADD COLUMN IF NOT EXISTS amount DOUBLE PRECISION;
-ALTER TABLE payments ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50);
-ALTER TABLE payments ADD COLUMN IF NOT EXISTS receipt_number VARCHAR(100);
-ALTER TABLE payments ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'captured';
-
 CREATE INDEX IF NOT EXISTS idx_payments_rp_id ON payments(razorpay_payment_id);
 
 -- =============================================================================
@@ -131,11 +142,6 @@ CREATE TABLE IF NOT EXISTS notifications (
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
-ALTER TABLE notifications ADD COLUMN IF NOT EXISTS product VARCHAR(50) DEFAULT 'suite';
-ALTER TABLE notifications ADD COLUMN IF NOT EXISTS category VARCHAR(50) DEFAULT 'general';
-ALTER TABLE notifications ADD COLUMN IF NOT EXISTS link_url TEXT;
-ALTER TABLE notifications ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT FALSE;
-
 CREATE INDEX IF NOT EXISTS idx_notifications_user_unread ON notifications(user_id, is_read);
 
 -- AI Inference & Token Audit Logs (LLM Observability)
