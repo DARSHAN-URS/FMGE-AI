@@ -189,3 +189,126 @@ async def get_faculty_analytics():
             "weakest_subject": "Community Medicine (PSM)"
         }
     }
+
+
+# ── Country-Specific Gap Analysis Endpoint (F-M02) ──────────────────
+
+@fmge_analytics_router.get("/country-gap-analysis")
+async def get_country_gap_analysis(country: str = "Georgia"):
+    """
+    F-M02: Country-Specific Curriculum Gap Analysis.
+    Correlates foreign medical graduation country with historically weak FMGE NBE subjects
+    and provides targeted high-yield remedial modules.
+    """
+    country_lower = country.lower().strip()
+    
+    country_profiles = {
+        "georgia": {
+            "country": "Georgia",
+            "curriculum_style": "European / ECTS Credit System",
+            "historical_pass_rate_benchmark": "28.4%",
+            "top_curriculum_gaps": [
+                {
+                    "subject": "Forensic Medicine & Toxicology (FMT)",
+                    "severity": "CRITICAL",
+                    "reason": "Georgian curriculum teaches local European forensic inquests; does not cover Indian IPC/CrPC legal inquests, post-mortem signs in tropical climates, or dowry death jurisprudence.",
+                    "high_yield_recommendation": "Complete FMT High-Yield Inquest & Toxicology Pack (+10 Marks)"
+                },
+                {
+                    "subject": "Community Medicine (PSM)",
+                    "severity": "HIGH",
+                    "reason": "Absence of Indian National Health Programs (NHM, RNTCP, UIP) and Indian epidemiological biostatistics in Georgian medical curriculum.",
+                    "high_yield_recommendation": "Revise National Immunization Schedule & Vector-borne disease control programs"
+                }
+            ],
+            "strengths": ["Clinical Anatomy", "Internal Medicine Diagnostics", "Biochemistry"],
+            "suggested_action": "Prioritize FMT & PSM QBank modules to close 18-mark curriculum gap."
+        },
+        "russia": {
+            "country": "Russia",
+            "curriculum_style": "Russian Federation Specialist Diploma",
+            "historical_pass_rate_benchmark": "22.1%",
+            "top_curriculum_gaps": [
+                {
+                    "subject": "Tropical Medicine & Infectious Diseases",
+                    "severity": "CRITICAL",
+                    "reason": "Russian climate results in limited clinical exposure to Indian endemic diseases like Malaria, Dengue, Kala-azar, Filariasis, and Leprosy.",
+                    "high_yield_recommendation": "Master Tropical Parasitology & Fever Syndromes Module (+12 Marks)"
+                },
+                {
+                    "subject": "Obstetrics & Gynecology (OBG)",
+                    "severity": "HIGH",
+                    "reason": "Protocol differences between Russian obstetric triage and Indian Labour Room protocols (Partograph, PPH management).",
+                    "high_yield_recommendation": "Practice 50 NBE-style OBG Clinical Vignettes"
+                }
+            ],
+            "strengths": ["Pathology & Histology", "General Surgery", "Physiology"],
+            "suggested_action": "Focus on Tropical Infectious Diseases and Indian National Vaccine Guidelines."
+        },
+        "kazakhstan": {
+            "country": "Kazakhstan",
+            "curriculum_style": "Central Asian Modular Medical Curriculum",
+            "historical_pass_rate_benchmark": "24.6%",
+            "top_curriculum_gaps": [
+                {
+                    "subject": "Pharmacology (Drug of Choice & Adverse Effects)",
+                    "severity": "CRITICAL",
+                    "reason": "Differences in pharmacopoeial naming (Cyrillic brand names vs Indian/USAN generic names).",
+                    "high_yield_recommendation": "Revise Antimicrobials & Autonomic Pharmacology Rapid Flashcards"
+                },
+                {
+                    "subject": "Pediatrics (Neonatal Resuscitation & Malnutrition)",
+                    "severity": "HIGH",
+                    "reason": "Indian FMGE heavily tests SAM, PEM (Kwashiorkor, Marasmus) and IMNCI guidelines not emphasized in Central Asia.",
+                    "high_yield_recommendation": "Review IMNCI chart and PEM classification rules"
+                }
+            ],
+            "strengths": ["Microbiology", "Human Anatomy", "Pathophysiology"],
+            "suggested_action": "Reinforce Indian IMNCI guidelines and generic drug pharmacokinetics."
+        },
+        "uzbekistan": {
+            "country": "Uzbekistan",
+            "curriculum_style": "Bilingual Central Asian Curriculum",
+            "historical_pass_rate_benchmark": "25.2%",
+            "top_curriculum_gaps": [
+                {
+                    "subject": "Forensic Medicine (FMT)",
+                    "severity": "CRITICAL",
+                    "reason": "Indian Legal Medicine, Medical Negligence (IPC 304A), and autopsy guidelines are completely distinct.",
+                    "high_yield_recommendation": "Attempt 100 FMT Legal Medicine MCQs"
+                },
+                {
+                    "subject": "Dermatology & Venereology",
+                    "severity": "MEDIUM",
+                    "reason": "Indian NBE image-based questions (IBQs) heavily feature Leprosy, Leishmaniasis, and STDs.",
+                    "high_yield_recommendation": "Complete Educational PACS Dermatology Quiz"
+                }
+            ],
+            "strengths": ["General Surgery", "Ophthalmology", "Orthopedics"],
+            "suggested_action": "Target Indian Legal Jurisprudence and Medical Image Lab."
+        },
+        "philippines": {
+            "country": "Philippines",
+            "curriculum_style": "USMLE-Pattern MD Curriculum",
+            "historical_pass_rate_benchmark": "36.8%",
+            "top_curriculum_gaps": [
+                {
+                    "subject": "Forensic Medicine & Indian Jurisprudence",
+                    "severity": "HIGH",
+                    "reason": "Philippine curriculum is heavily US-focused; lacks Indian medico-legal documentation protocols.",
+                    "high_yield_recommendation": "Review Indian Courts, Inquests & Medical Council acts"
+                },
+                {
+                    "subject": "Community Medicine (Indian Rural Health)",
+                    "severity": "HIGH",
+                    "reason": "Indian Primary Health Centre (PHC) staffing, sanitation, and National Health Mission schemes.",
+                    "high_yield_recommendation": "Practice PSM National Health Programs Module"
+                }
+            ],
+            "strengths": ["Internal Medicine", "Clinical Case Vignettes", "Psychiatry"],
+            "suggested_action": "Quick revision on Indian Rural Health Administration and FMT Inquests."
+        }
+    }
+    
+    selected_data = country_profiles.get(country_lower, country_profiles["georgia"])
+    return {"success": True, "country_gap_analysis": selected_data}

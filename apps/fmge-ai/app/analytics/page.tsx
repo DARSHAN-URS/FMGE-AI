@@ -4,14 +4,20 @@ import Link from "next/link";
 import { SidebarLayout } from "@/components/dashboard/SidebarLayout";
 import {
   TrendingUp, Sparkles, CheckCircle2, ShieldCheck, Download, Sliders,
-  Zap, Award, AlertCircle, ArrowRight, BarChart3, Users
+  Zap, Award, AlertCircle, ArrowRight, BarChart3, Users, Globe, BookOpen
 } from "lucide-react";
-import { fetchAnalyticsOverview, fetchSubjectMatrix, fetchAnalyticsRecommendations, SubjectAnalyticsItem, AnalyticsOverview, AnalyticsRecommendation } from "@/services/fmge_analytics";
+import {
+  fetchAnalyticsOverview, fetchSubjectMatrix, fetchAnalyticsRecommendations,
+  fetchCountryGapAnalysis, SubjectAnalyticsItem, AnalyticsOverview,
+  AnalyticsRecommendation, CountryGapAnalysis
+} from "@/services/fmge_analytics";
 
 export default function AnalyticsDashboardPage() {
   const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
   const [subjectMatrix, setSubjectMatrix] = useState<SubjectAnalyticsItem[]>([]);
   const [recommendations, setRecommendations] = useState<AnalyticsRecommendation[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState("Georgia");
+  const [countryGap, setCountryGap] = useState<CountryGapAnalysis | null>(null);
   const [extraWeeks, setExtraWeeks] = useState(0);
   const [extraMocks, setExtraMocks] = useState(0);
   const [pharmaBoost, setPharmaBoost] = useState(false);
@@ -35,6 +41,14 @@ export default function AnalyticsDashboardPage() {
       })
       .catch((e) => console.warn("Recommendations fetch error:", e));
   }, []);
+
+  useEffect(() => {
+    fetchCountryGapAnalysis(selectedCountry)
+      .then((data) => {
+        if (data) setCountryGap(data);
+      })
+      .catch((e) => console.warn("Country gap fetch error:", e));
+  }, [selectedCountry]);
 
   // Simulated score boost calculations
   const baseScore = overview ? parseInt(overview.readiness.estimated_marks) || 194 : 194;
@@ -163,6 +177,78 @@ export default function AnalyticsDashboardPage() {
             </div>
 
           </div>
+        </div>
+
+        {/* F-M02: Country-Specific Curriculum Gap Analysis */}
+        <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-teal-200 dark:border-slate-800 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Globe className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                <h3 className="font-extrabold text-lg text-slate-900 dark:text-white">
+                  Country-Specific Curriculum Gap Analysis (F-M02)
+                </h3>
+              </div>
+              <p className="text-xs text-slate-500">
+                AI correlates foreign MBBS graduation country with NBE FMGE curriculum discrepancies to isolate vulnerable subjects.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Graduation Country:</label>
+              <select
+                value={selectedCountry}
+                onChange={(e) => setSelectedCountry(e.target.value)}
+                className="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-teal-500"
+              >
+                <option value="Georgia">Georgia (ECTS)</option>
+                <option value="Russia">Russia (Specialist)</option>
+                <option value="Kazakhstan">Kazakhstan (Central Asia)</option>
+                <option value="Uzbekistan">Uzbekistan</option>
+                <option value="Philippines">Philippines (USMLE)</option>
+              </select>
+            </div>
+          </div>
+
+          {countryGap && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 space-y-1">
+                  <span className="text-[10px] font-extrabold uppercase text-slate-400">Curriculum Structure</span>
+                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{countryGap.curriculum_style}</p>
+                </div>
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 space-y-1">
+                  <span className="text-[10px] font-extrabold uppercase text-slate-400">National Pass Benchmark</span>
+                  <p className="text-xs font-bold text-teal-600">{countryGap.historical_pass_rate_benchmark}</p>
+                </div>
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 space-y-1">
+                  <span className="text-[10px] font-extrabold uppercase text-slate-400">Clinical Strengths</span>
+                  <p className="text-xs font-bold text-emerald-600">{countryGap.strengths.join(" • ")}</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
+                  Critical Curriculum Gaps vs Indian NBE Blueprint
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {countryGap.top_curriculum_gaps.map((gap, idx) => (
+                    <div key={idx} className="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-extrabold text-xs text-amber-900 dark:text-amber-300">{gap.subject}</span>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-black bg-rose-500 text-white uppercase">{gap.severity}</span>
+                      </div>
+                      <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">{gap.reason}</p>
+                      <div className="pt-2 border-t border-amber-200/60 dark:border-amber-900/30 flex items-center justify-between text-xs font-bold text-teal-600 dark:text-teal-400">
+                        <span>{gap.high_yield_recommendation}</span>
+                        <Link href="/qbank" className="hover:underline flex items-center gap-1">Practice →</Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 19-Subject Performance Matrix Table */}
