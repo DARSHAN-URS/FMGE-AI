@@ -20,24 +20,24 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      if (isSupabaseConfigured()) {
-        const { data, error: authError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+      if (!isSupabaseConfigured()) {
+        setError("Supabase Auth is not configured. Please provide your real NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local or Netlify environment variables.");
+        setLoading(false);
+        return;
+      }
 
-        if (authError) {
-          setError(authError.message);
-          setLoading(false);
-          return;
-        }
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-        if (data.session) {
-          document.cookie = "fmge_auth=1; path=/; max-age=2592000; SameSite=Lax";
-          router.push("/dashboard");
-        }
-      } else {
-        // Fallback for local development when credentials are placeholders
+      if (authError) {
+        setError(authError.message);
+        setLoading(false);
+        return;
+      }
+
+      if (data.session) {
         document.cookie = "fmge_auth=1; path=/; max-age=2592000; SameSite=Lax";
         router.push("/dashboard");
       }
@@ -52,21 +52,22 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      if (isSupabaseConfigured()) {
-        const { error: authError } = await supabase.auth.signInWithOAuth({
-          provider: "google",
-          options: {
-            redirectTo: typeof window !== "undefined" ? `${window.location.origin}/dashboard` : undefined,
-          },
-        });
+      if (!isSupabaseConfigured()) {
+        setError("Supabase Auth is not configured. Please provide your real NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.");
+        setLoading(false);
+        return;
+      }
 
-        if (authError) {
-          setError(authError.message);
-          setLoading(false);
-        }
-      } else {
-        document.cookie = "fmge_auth=1; path=/; max-age=2592000; SameSite=Lax";
-        router.push("/dashboard");
+      const { error: authError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: typeof window !== "undefined" ? `${window.location.origin}/dashboard` : undefined,
+        },
+      });
+
+      if (authError) {
+        setError(authError.message);
+        setLoading(false);
       }
     } catch (err: any) {
       setError(err?.message || "Google sign in failed.");

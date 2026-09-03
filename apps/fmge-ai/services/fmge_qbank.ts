@@ -6,6 +6,7 @@ export interface SubjectTaxonomy {
   category: string;
   total_qs: number;
   high_yield_topics: string[];
+  completion?: number;
 }
 
 export interface QuestionOption {

@@ -37,7 +37,14 @@ export async function sendTutorMessage(payload: {
     throw new Error("Failed to receive response from AI Medical Tutor");
   }
 
-  return res.json();
+  const data = await res.json();
+  return {
+    success: data.success ?? true,
+    reply: data.response_markdown || data.reply || "",
+    citations: data.citations || [],
+    follow_ups: data.follow_up_suggestions || data.follow_ups || [],
+    teaching_mode: data.mode,
+  };
 }
 
 export async function generateTutorFlashcards(payload: {
@@ -45,14 +52,20 @@ export async function generateTutorFlashcards(payload: {
   topic: string;
   count?: number;
 }): Promise<Flashcard[]> {
-  const res = await authenticatedFetch("/api/fmge/ai-tutor/flashcards", {
+  const res = await authenticatedFetch("/api/fmge/ai-tutor/generate-flashcards", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 
   if (!res.ok) return [];
   const data = await res.json();
-  return data.flashcards || [];
+  return (data.flashcards || []).map((c: any, idx: number) => ({
+    id: `fc-${idx}`,
+    front: c.q || c.front,
+    back: c.a || c.back,
+    high_yield: true,
+    subject: payload.topic,
+  }));
 }
 
 export async function generateTutorQuiz(payload: {
@@ -60,7 +73,7 @@ export async function generateTutorQuiz(payload: {
   topic: string;
   count?: number;
 }): Promise<any[]> {
-  const res = await authenticatedFetch("/api/fmge/ai-tutor/quiz", {
+  const res = await authenticatedFetch("/api/fmge/ai-tutor/generate-quiz", {
     method: "POST",
     body: JSON.stringify(payload),
   });

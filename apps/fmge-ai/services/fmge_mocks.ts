@@ -48,53 +48,21 @@ export async function fetchMockTemplates(): Promise<MockTemplate[]> {
 }
 
 export async function fetchMockQuestions(testId: string = "gt-01"): Promise<MockQuestion[]> {
-  const res = await authenticatedFetch(`/api/fmge/mock-tests/questions?test_id=${testId}`);
+  const res = await authenticatedFetch(`/api/fmge/mock-tests/${testId}/questions`);
   if (!res.ok) {
-    // Fallback standard NBE question list
-    return [
-      {
-        id: 101,
-        part: "Part A",
-        subject: "General Medicine",
-        topic: "Cardiology",
-        stem: "A 45-year-old male presents with sudden onset retrosternal crushing pain radiating to left jaw. ECG shows ST elevation in II, III, aVF. What coronary artery is acutely occluded?",
-        options: [
-          { id: 0, text: "Left Anterior Descending Artery (LAD)" },
-          { id: 1, text: "Right Coronary Artery (RCA)" },
-          { id: 2, text: "Left Circumflex Artery (LCx)" },
-          { id: 3, text: "Left Main Coronary Artery (LMCA)" }
-        ]
-      },
-      {
-        id: 102,
-        part: "Part A",
-        subject: "Pharmacology",
-        topic: "Antimicrobials",
-        stem: "Which of the following anti-hypertensive drugs is contraindicated in pregnant women due to risk of fetal renal dysgenesis?",
-        options: [
-          { id: 0, text: "Labetalol" },
-          { id: 1, text: "Methyldopa" },
-          { id: 2, text: "Enalapril (ACE Inhibitor)" },
-          { id: 3, text: "Nifedipine" }
-        ]
-      },
-      {
-        id: 103,
-        part: "Part B",
-        subject: "Obstetrics & Gynecology",
-        topic: "Pre-eclampsia",
-        stem: "A 28-year-old primigravida at 34 weeks presents with BP 165/110 mmHg, 3+ proteinuria, and severe headache. What is the drug of choice for seizure prophylaxis?",
-        options: [
-          { id: 0, text: "Phenytoin" },
-          { id: 1, text: "Magnesium Sulfate (MgSO4)" },
-          { id: 2, text: "Diazepam" },
-          { id: 3, text: "Sodium Nitroprusside" }
-        ]
-      }
-    ];
+    throw new Error(`Failed to load mock questions from backend: ${res.statusText}`);
   }
   const data = await res.json();
-  return data.questions || [];
+  const rawQuestions = data.questions || [];
+  return rawQuestions.map((q: any) => ({
+    id: q.id,
+    part: q.part || "Part A",
+    subject: q.subject || "Medical Sciences",
+    topic: q.topic || "General",
+    stem: q.question_stem || q.stem,
+    options: q.options || [],
+    correct_option: q.correct_option,
+  }));
 }
 
 export async function autoSaveMockAnswers(payload: {

@@ -11,39 +11,10 @@ import {
 import { fetchQuestionList, submitQuestionAttempt, toggleQuestionBookmark, Question } from "@/services/fmge_qbank";
 import { useAuth } from "@/components/common/AuthContext";
 
-const fallbackQuestion: Question = {
-  id: 101,
-  subject: "General Medicine",
-  topic: "Cardiology • Acute Coronary Syndromes",
-  difficulty: "Hard (NBE Level)",
-  estimated_time_seconds: 60,
-  marks: 1,
-  is_ibq: true,
-  image_url: "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800&auto=format&fit=crop&q=80",
-  question_stem: "A 45-year-old diabetic male presents with acute onset crushing retrosternal chest pain radiating to his left shoulder for 2 hours. ECG demonstrates ST-segment elevation in leads II, III, and aVF with reciprocal depression in I and aVL. Which coronary vessel is acutely occluded?",
-  options: [
-    { id: 0, label: "A", text: "Left Anterior Descending Artery (LAD)" },
-    { id: 1, label: "B", text: "Right Coronary Artery (RCA)" },
-    { id: 2, label: "C", text: "Left Circumflex Artery (LCx)" },
-    { id: 3, label: "D", text: "Left Main Coronary Artery (LMCA)" },
-  ],
-  correct_option: 1,
-  explanation: {
-    correct_rationale: "ST-segment elevation in inferior leads (II, III, and aVF) is diagnostic of Inferior Wall Myocardial Infarction (IWMI). In over 85–90% of individuals, the inferior LV wall is supplied by the Right Coronary Artery (RCA).",
-    distractor_analysis: {
-      A: "LAD supplies Anterior Wall (V1-V4).",
-      B: "RCA (Correct) supplies Inferior Wall (II, III, aVF) & SA/AV nodes.",
-      C: "LCx supplies Lateral Wall (I, aVL, V5-V6).",
-      D: "LMCA causes massive Antero-lateral MI with cardiogenic shock."
-    },
-    high_yield_pearl: "Inferior MI = RCA (II, III, aVF) | Anterior MI = LAD (V1-V4) | Lateral MI = LCx (I, aVL)",
-    textbook_reference: "Harrison's Principles of Internal Medicine (21st Ed), Ch 270"
-  }
-};
-
 export default function QBankSessionPage() {
   const { user } = useAuth();
-  const [questions, setQuestions] = useState<Question[]>([fallbackQuestion]);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOpt, setSelectedOpt] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState(false);
@@ -55,11 +26,15 @@ export default function QBankSessionPage() {
   useEffect(() => {
     fetchQuestionList()
       .then((data) => {
-        if (data && data.length > 0) {
+        if (data) {
           setQuestions(data);
         }
+        setLoading(false);
       })
-      .catch((e) => console.warn("Failed to load questions from backend:", e));
+      .catch((e) => {
+        console.warn("Failed to load questions from backend:", e);
+        setLoading(false);
+      });
   }, []);
 
   useEffect(() => {
@@ -69,7 +44,7 @@ export default function QBankSessionPage() {
     return () => clearInterval(timer);
   }, [currentIndex]);
 
-  const currentQ = questions[currentIndex] || fallbackQuestion;
+  const currentQ = questions[currentIndex];
 
   const toggleStrikethrough = (optId: number, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -117,6 +92,16 @@ export default function QBankSessionPage() {
       setCurrentIndex(0);
     }
   };
+
+  if (loading || !currentQ) {
+    return (
+      <SidebarLayout>
+        <div className="p-16 text-center text-xs font-bold text-slate-500 glass-panel rounded-2xl border border-slate-200 dark:border-slate-800">
+          Loading live NBE question stream from AI Question Bank...
+        </div>
+      </SidebarLayout>
+    );
+  }
 
   const isCorrect = selectedOpt === currentQ.correct_option;
 

@@ -5,44 +5,23 @@ import { SidebarLayout } from "@/components/dashboard/SidebarLayout";
 import { BookOpen, Sparkles, Filter, ChevronRight, Zap, AlertTriangle, Layers, Play } from "lucide-react";
 import { fetchSubjectTaxonomy, SubjectTaxonomy } from "@/services/fmge_qbank";
 
-const defaultSubjects = [
-  { id: "general-medicine", name: "General Medicine", category: "Clinical", total_qs: 2850, completion: 74 },
-  { id: "general-surgery", name: "General Surgery", category: "Clinical", total_qs: 2640, completion: 68 },
-  { id: "obstetrics-gynecology", name: "Obstetrics & Gynecology (OBG)", category: "Clinical", total_qs: 2400, completion: 82 },
-  { id: "pharmacology", name: "Pharmacology", category: "Para-Clinical", total_qs: 1850, completion: 52 },
-  { id: "pathology", name: "Pathology", category: "Para-Clinical", total_qs: 1780, completion: 61 },
-  { id: "community-medicine", name: "Community Medicine (PSM)", category: "Para-Clinical", total_qs: 1620, completion: 45 },
-  { id: "anatomy", name: "Anatomy", category: "Pre-Clinical", total_qs: 1450, completion: 88 },
-  { id: "physiology", name: "Physiology", category: "Pre-Clinical", total_qs: 1320, completion: 70 },
-  { id: "biochemistry", name: "Biochemistry", category: "Pre-Clinical", total_qs: 1210, completion: 58 },
-  { id: "microbiology", name: "Microbiology", category: "Para-Clinical", total_qs: 1150, completion: 64 },
-  { id: "forensic-medicine", name: "Forensic Medicine (FMT)", category: "Para-Clinical", total_qs: 950, completion: 90 },
-  { id: "pediatrics", name: "Pediatrics", category: "Clinical", total_qs: 920, completion: 76 },
-  { id: "orthopedics", name: "Orthopedics", category: "Clinical", total_qs: 850, completion: 80 },
-  { id: "ophthalmology", name: "Ophthalmology", category: "Clinical", total_qs: 820, completion: 85 },
-  { id: "ent", name: "ENT", category: "Clinical", total_qs: 800, completion: 79 },
-  { id: "dermatology", name: "Dermatology & STD", category: "Clinical", total_qs: 650, completion: 92 },
-  { id: "psychiatry", name: "Psychiatry", category: "Clinical", total_qs: 620, completion: 86 },
-  { id: "radiology", name: "Radiology", category: "Clinical", total_qs: 600, completion: 73 },
-  { id: "anesthesiology", name: "Anesthesiology", category: "Clinical", total_qs: 580, completion: 81 }
-];
-
 export default function QBankExplorerPage() {
-  const [subjectsList, setSubjectsList] = useState<any[]>(defaultSubjects);
+  const [subjectsList, setSubjectsList] = useState<SubjectTaxonomy[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   useEffect(() => {
     fetchSubjectTaxonomy()
       .then((tax) => {
-        if (tax && tax.length > 0) {
-          const mapped = tax.map((t) => ({
-            ...t,
-            completion: 70,
-          }));
-          setSubjectsList(mapped);
+        if (tax) {
+          setSubjectsList(tax);
         }
+        setLoading(false);
       })
-      .catch((e) => console.warn("Failed to load backend taxonomy:", e));
+      .catch((e) => {
+        console.warn("Failed to load backend taxonomy:", e);
+        setLoading(false);
+      });
   }, []);
 
   const filteredSubjects = selectedCategory === "All"
@@ -172,10 +151,10 @@ export default function QBankExplorerPage() {
                 <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-1.5">
                   <div className="flex justify-between text-[11px] font-bold">
                     <span className="text-slate-500">Completion:</span>
-                    <span className="text-teal-600">{sub.completion}%</span>
+                    <span className="text-teal-600">{sub.completion ?? 0}%</span>
                   </div>
                   <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5">
-                    <div className="bg-teal-500 h-1.5 rounded-full" style={{ width: `${sub.completion}%` }} />
+                    <div className="bg-teal-500 h-1.5 rounded-full" style={{ width: `${sub.completion ?? 0}%` }} />
                   </div>
                 </div>
               </Link>
