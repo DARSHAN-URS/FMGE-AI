@@ -8,121 +8,51 @@ import {
   BookOpen, Bot, Award, ArrowRight, ShieldCheck, Zap, AlertCircle
 } from "lucide-react";
 
-interface OverviewData {
-  student: {
-    name: string;
-    medical_college: string;
-    country: string;
-    target_exam: string;
-    days_until_exam: number;
-    study_streak_days: number;
-    daily_motivation: string;
-    subscription_plan: string;
-  };
-  readiness_score: {
-    overall_pct: number;
-    subject_mastery_pct: number;
-    clinical_reasoning_pct: number;
-    time_management_pct: number;
-    estimated_marks: string;
-    cutoff_met: boolean;
-    trend: string;
-  };
-  daily_targets: Array<{
-    id: string;
-    title: string;
-    subtitle: string;
-    estimated_mins: number;
-    completed: boolean;
-  }>;
-  overall_progress: {
-    questions_solved: number;
-    total_qbank: number;
-    mock_tests_completed: number;
-    subjects_completed: number;
-    course_completion_pct: number;
-  };
-  recent_activities: Array<{
-    id: string;
-    title: string;
-    meta: string;
-    time: string;
-    type: string;
-  }>;
-  ai_recommendations: Array<{
-    id: string;
-    title: string;
-    reason: string;
-    action_url: string;
-  }>;
-}
+import { fetchDashboardOverview, toggleTaskComplete, OverviewData } from "@/services/fmge_dashboard";
+import { useAuth } from "@/components/common/AuthContext";
 
 export default function DashboardPage() {
+  const { user, profile } = useAuth();
   const [data, setData] = useState<OverviewData | null>(null);
   const [tasks, setTasks] = useState<Array<{ id: string; title: string; subtitle: string; estimated_mins?: number; completed: boolean }>>([]);
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/fmge/dashboard/overview")
-      .then((res) => res.json())
+    fetchDashboardOverview()
       .then((resData) => {
         if (resData.success) {
-          setData(resData);
-          setTasks(resData.daily_targets);
+          // If authenticated user has full_name in profile or user_metadata, display it
+          const realName = profile?.full_name || user?.user_metadata?.full_name || resData.student.name;
+          const realCollege = profile?.medical_college || user?.user_metadata?.medical_college || resData.student.medical_college;
+          const realCountry = profile?.country || user?.user_metadata?.country || resData.student.country;
+          const realExam = profile?.target_exam || resData.student.target_exam;
+
+          const merged: OverviewData = {
+            ...resData,
+            student: {
+              ...resData.student,
+              name: realName,
+              medical_college: realCollege,
+              country: realCountry,
+              target_exam: realExam,
+            }
+          };
+
+          setData(merged);
+          setTasks(merged.daily_targets);
         }
       })
-      .catch(() => {
-        // Fallback demo state
-        const fallback: OverviewData = {
-          student: {
-            name: "Dr. Rahul Sharma",
-            medical_college: "Kursk State Medical University",
-            country: "Russia",
-            target_exam: "FMGE Dec 2026",
-            days_until_exam: 142,
-            study_streak_days: 7,
-            daily_motivation: "“Wherever the art of Medicine is loved, there is also a love of Humanity.” — Hippocrates",
-            subscription_plan: "Pro Clinical Pass"
-          },
-          readiness_score: {
-            overall_pct: 84.5,
-            subject_mastery_pct: 82.0,
-            clinical_reasoning_pct: 88.4,
-            time_management_pct: 81.2,
-            estimated_marks: "194 / 300",
-            cutoff_met: true,
-            trend: "+4.2% this week"
-          },
-          daily_targets: [
-            { id: "t1", title: "Pharmacology • Antimicrobial Drug Mechanisms", subtitle: "50 MCQs + 20 High-Yield Flashcards", estimated_mins: 45, completed: true },
-            { id: "t2", title: "PSM • Vaccine Schedule & Biostatistics", subtitle: "30 MCQs + Formula Review", estimated_mins: 30, completed: false },
-            { id: "t3", title: "Radiology IBQ • X-Ray Sign Interpretations", subtitle: "15 High-Resolution Case Slides", estimated_mins: 25, completed: false }
-          ],
-          overall_progress: {
-            questions_solved: 3420,
-            total_qbank: 15000,
-            mock_tests_completed: 6,
-            subjects_completed: 12,
-            course_completion_pct: 68.4
-          },
-          recent_activities: [
-            { id: "a1", title: "Completed NBE Grand Test #5", meta: "Scored 188/300 (Pass)", time: "2 hours ago", type: "mock" },
-            { id: "a2", title: "Solved 50 Pharmacology MCQs", meta: "Accuracy 84%", time: "Yesterday", type: "qbank" },
-            { id: "a3", title: "AI Clinical Tutor Session", meta: "Asked about NPH Triad & ECG Signs", time: "2 days ago", type: "ai" }
-          ],
-          ai_recommendations: [
-            { id: "r1", title: "Revise Autonomic Pharmacology", reason: "Accuracy dropped below 70% in recent Grand Test #5", action_url: "/qbank" },
-            { id: "r2", title: "Take 60-Q Mini Mock Test", reason: "Improve time management speed by 5 seconds per MCQ", action_url: "/mocks" }
-          ]
-        };
-        setData(fallback);
-        setTasks(fallback.daily_targets);
+      .catch((err) => {
+        console.warn("Dashboard overview backend fetch error:", err);
       });
-  }, []);
+  }, [user, profile]);
 
   const toggleTask = (id: string) => {
+    const current = tasks.find((t) => t.id === id);
+    const nextCompleted = !current?.completed;
     setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
+      prev.map((t) => (t.id === id ? { ...t, completed: nextCompleted } : t))
     );
+    toggleTaskComplete(id, nextCompleted).catch((e) => console.warn("Failed to update task state on backend:", e));
   };
 
   if (!data) {

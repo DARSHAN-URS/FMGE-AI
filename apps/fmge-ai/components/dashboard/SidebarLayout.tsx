@@ -8,14 +8,20 @@ import {
   Stethoscope, LayoutDashboard, Calendar, BookOpen, Clock, Bot,
   Stethoscope as CaseIcon, Layers, TrendingUp, Bookmark, FileText,
   Award, CreditCard, Settings, HelpCircle, Menu, X, Search, Bell,
-  User, Sun, Moon
+  User, Sun, Moon, LogOut
 } from "lucide-react";
+import { useAuth } from "@/components/common/AuthContext";
 
 export function SidebarLayout({ children }: { children: React.ReactNode }) {
+  const { user, profile, signOut } = useAuth();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [darkMode, setDarkMode] = useState(false);
+
+  const displayName = profile?.full_name || user?.user_metadata?.full_name || (user?.email ? user.email.split("@")[0] : "Dr. Rahul Sharma");
+  const initials = displayName.split(" ").map((n: string) => n[0]).slice(0, 2).join("").toUpperCase() || "RS";
+  const userPlan = profile?.subscription_plan || "Pro Clinical Pass";
 
   const toggleDarkMode = () => {
     if (darkMode) {
@@ -94,14 +100,25 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
         </nav>
 
         {/* User Card at bottom */}
-        <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-teal-600 text-white font-bold text-xs flex items-center justify-center">
-            RS
-          </div>
-          <div className="flex flex-col flex-1 overflow-hidden">
-            <span className="text-xs font-bold text-slate-900 dark:text-white truncate">Dr. Rahul Sharma</span>
-            <span className="text-[10px] text-teal-600 font-semibold">Pro Clinical Pass</span>
-          </div>
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+          <Link href="/profile" className="flex items-center gap-3 flex-1 overflow-hidden group">
+            <div className="w-9 h-9 rounded-full bg-teal-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+              {initials}
+            </div>
+            <div className="flex flex-col flex-1 overflow-hidden">
+              <span className="text-xs font-bold text-slate-900 dark:text-white truncate group-hover:text-teal-600 transition-colors">
+                {displayName}
+              </span>
+              <span className="text-[10px] text-teal-600 font-semibold">{userPlan}</span>
+            </div>
+          </Link>
+          <button
+            onClick={() => signOut()}
+            title="Sign Out"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </aside>
 
@@ -150,7 +167,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
 
             <Link href="/profile" className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-teal-600 text-white font-bold text-xs flex items-center justify-center">
-                RS
+                {initials}
               </div>
             </Link>
           </div>

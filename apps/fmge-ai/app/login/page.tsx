@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Stethoscope, Lock, Mail, ArrowRight, ShieldCheck, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { Stethoscope, Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,23 +14,64 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    setTimeout(() => {
+    try {
+      if (isSupabaseConfigured()) {
+        const { data, error: authError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (authError) {
+          setError(authError.message);
+          setLoading(false);
+          return;
+        }
+
+        if (data.session) {
+          document.cookie = "fmge_auth=1; path=/; max-age=2592000; SameSite=Lax";
+          router.push("/dashboard");
+        }
+      } else {
+        // Fallback for local development when credentials are placeholders
+        document.cookie = "fmge_auth=1; path=/; max-age=2592000; SameSite=Lax";
+        router.push("/dashboard");
+      }
+    } catch (err: any) {
+      setError(err?.message || "Failed to sign in. Please check your credentials.");
       setLoading(false);
-      // Redirect to onboarding after login
-      router.push("/onboarding");
-    }, 800);
+    }
   };
 
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = async () => {
+    setError(null);
     setLoading(true);
-    setTimeout(() => {
-      router.push("/onboarding");
-    }, 600);
+
+    try {
+      if (isSupabaseConfigured()) {
+        const { error: authError } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: typeof window !== "undefined" ? `${window.location.origin}/dashboard` : undefined,
+          },
+        });
+
+        if (authError) {
+          setError(authError.message);
+          setLoading(false);
+        }
+      } else {
+        document.cookie = "fmge_auth=1; path=/; max-age=2592000; SameSite=Lax";
+        router.push("/dashboard");
+      }
+    } catch (err: any) {
+      setError(err?.message || "Google sign in failed.");
+      setLoading(false);
+    }
   };
 
   return (

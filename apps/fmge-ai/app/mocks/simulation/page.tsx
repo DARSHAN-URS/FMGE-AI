@@ -50,8 +50,13 @@ const sampleQuestions = [
   }
 ];
 
+import { fetchMockQuestions, autoSaveMockAnswers, submitMockTest, MockQuestion } from "@/services/fmge_mocks";
+import { useAuth } from "@/components/common/AuthContext";
+
 export default function ExamSimulationPage() {
   const router = useRouter();
+  const { user } = useAuth();
+  const [questions, setQuestions] = useState<MockQuestion[]>(sampleQuestions);
   const [currentPart, setCurrentPart] = useState<"Part A" | "Part B">("Part A");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
@@ -59,19 +64,59 @@ export default function ExamSimulationPage() {
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState("Auto-saved");
 
-  const currentQ = sampleQuestions[currentIndex];
+  useEffect(() => {
+    fetchMockQuestions("gt-01")
+      .then((qs) => {
+        if (qs && qs.length > 0) setQuestions(qs);
+      })
+      .catch((e) => console.warn("Could not load mock questions:", e));
+  }, []);
+
+  const currentQ = questions[currentIndex] || sampleQuestions[0];
 
   const handleSelectOption = (optId: number) => {
-    setAnswers((prev) => ({ ...prev, [currentQ.id]: optId }));
+    const updated = { ...answers, [currentQ.id]: optId };
+    setAnswers(updated);
     setAutoSaveStatus("Saving...");
-    setTimeout(() => setAutoSaveStatus("Auto-saved"), 400);
+    
+    if (user?.id) {
+      const stringAnswers: Record<string, number> = {};
+      Object.entries(updated).forEach(([k, v]) => {
+        stringAnswers[k] = v;
+      });
+      autoSaveMockAnswers({
+        user_id: user.id,
+        test_id: "gt-01",
+        answers: stringAnswers,
+        time_remaining_seconds: 7200,
+      }).then(() => setAutoSaveStatus("Auto-saved"))
+        .catch(() => setAutoSaveStatus("Auto-saved (local)"));
+    } else {
+      setTimeout(() => setAutoSaveStatus("Auto-saved"), 300);
+    }
   };
 
   const toggleMarkForReview = () => {
     setMarkedForReview((prev) => ({ ...prev, [currentQ.id]: !prev[currentQ.id] }));
   };
 
-  const handleFinalSubmit = () => {
+  const handleFinalSubmit = async () => {
+    if (user?.id) {
+      try {
+        const stringAnswers: Record<string, number> = {};
+        Object.entries(answers).forEach(([k, v]) => {
+          stringAnswers[k] = v;
+        });
+        await submitMockTest({
+          user_id: user.id,
+          test_id: "gt-01",
+          answers: stringAnswers,
+          time_taken_seconds: 3600,
+        });
+      } catch (err) {
+        console.warn("Submit test error:", err);
+      }
+    }
     router.push("/mocks/results/gt-01");
   };
 

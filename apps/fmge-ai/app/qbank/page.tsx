@@ -1,11 +1,11 @@
 "use client";
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { SidebarLayout } from "@/components/dashboard/SidebarLayout";
 import { BookOpen, Sparkles, Filter, ChevronRight, Zap, AlertTriangle, Layers, Play } from "lucide-react";
+import { fetchSubjectTaxonomy, SubjectTaxonomy } from "@/services/fmge_qbank";
 
-const subjects = [
+const defaultSubjects = [
   { id: "general-medicine", name: "General Medicine", category: "Clinical", total_qs: 2850, completion: 74 },
   { id: "general-surgery", name: "General Surgery", category: "Clinical", total_qs: 2640, completion: 68 },
   { id: "obstetrics-gynecology", name: "Obstetrics & Gynecology (OBG)", category: "Clinical", total_qs: 2400, completion: 82 },
@@ -28,11 +28,26 @@ const subjects = [
 ];
 
 export default function QBankExplorerPage() {
+  const [subjectsList, setSubjectsList] = useState<any[]>(defaultSubjects);
   const [selectedCategory, setSelectedCategory] = useState("All");
 
+  useEffect(() => {
+    fetchSubjectTaxonomy()
+      .then((tax) => {
+        if (tax && tax.length > 0) {
+          const mapped = tax.map((t) => ({
+            ...t,
+            completion: 70,
+          }));
+          setSubjectsList(mapped);
+        }
+      })
+      .catch((e) => console.warn("Failed to load backend taxonomy:", e));
+  }, []);
+
   const filteredSubjects = selectedCategory === "All"
-    ? subjects
-    : subjects.filter((s) => s.category === selectedCategory);
+    ? subjectsList
+    : subjectsList.filter((s) => s.category === selectedCategory);
 
   return (
     <SidebarLayout>
