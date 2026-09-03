@@ -1,6 +1,7 @@
 [build]
+  base = "apps/fmge-ai"
   command = "npm run build"
-  publish = ".next"
+  publish = "apps/fmge-ai/.next"
 
 [build.environment]
   GIT_SUBMODULES = "false"
@@ -8,8 +9,3 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
-
-[[redirects]]
-  from = "/"
-  to = "/dashboard"
-  status = 302

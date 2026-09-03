@@ -55,6 +55,7 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 *.pem
+migration/archive/
 
 # ── IDE / Editor ──────────────────────────────────────────────────────────────
 .vscode/

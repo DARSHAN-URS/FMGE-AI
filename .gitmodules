@@ -1,0 +1,6 @@
+[submodule "apps/aura-routes"]
+	path = apps/aura-routes
+	url = https://github.com/DARSHAN-URS/AURAwebapp.git
+[submodule "apps/nursepass"]
+	path = apps/nursepass
+	url = https://github.com/DARSHAN-URS/NursePass.git
